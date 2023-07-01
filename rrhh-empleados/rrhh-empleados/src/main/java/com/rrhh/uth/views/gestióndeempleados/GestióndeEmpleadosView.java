@@ -1,5 +1,7 @@
 package com.rrhh.uth.views.gestióndeempleados;
 
+import com.rrhh.uth.data.controller.EmployeeInteractor;
+import com.rrhh.uth.data.controller.EmployeeInteractorImpl;
 import com.rrhh.uth.data.entity.Empleado;
 import com.rrhh.uth.data.entity.Puesto;
 import com.rrhh.uth.views.MainLayout;
@@ -36,7 +38,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 @PageTitle("Gestión de Empleados")
 @Route(value = "gestion-empleados/:empleadoID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
-public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver {
+public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver, EmployeeViewModel {
 
     private final String EMPLEADO_ID = "empleadoID";
     private final String EMPLEADO_EDIT_ROUTE_TEMPLATE = "gestion-empleados/%s/edit";
@@ -50,14 +52,18 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver 
     private TimePicker horarioInicio;
     private TimePicker horarioFin; 
     private ComboBox<Puesto> puesto;
+    private List<Empleado> empleados;
 
     private final Button cancel = new Button("Cancelar");
     private final Button save = new Button("Guardar");
 
     private Empleado empleado;
+    private EmployeeInteractor controlador;
 
     public GestióndeEmpleadosView() {
         addClassNames("gestiónde-empleados-view");
+        empleados = new ArrayList<>();
+        this.controlador = new EmployeeInteractorImpl(this);
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
@@ -72,8 +78,8 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver 
         grid.addColumn("identidad").setAutoWidth(true);
         grid.addColumn("sueldo").setAutoWidth(true);
         grid.addColumn("telefono").setAutoWidth(true);
-        grid.addColumn(Empleado::getHorarioInicio).setAutoWidth(true);
-        grid.addColumn(Empleado::getHorarioFin).setAutoWidth(true);
+        grid.addColumn(Empleado::getHorarioinicio).setAutoWidth(true);
+        grid.addColumn(Empleado::getHorariofin).setAutoWidth(true);
         grid.addColumn("puesto").setAutoWidth(true);
         /*grid.setItems(query -> empleadoService.list(
                 PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
@@ -89,6 +95,9 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver 
                 UI.getCurrent().navigate(GestióndeEmpleadosView.class);
             }
         });
+        
+        //AQUI MANDO A TRAER LOS EMPLEADOS DE EL REPOSITORIO
+        this.controlador.consultarEmpleados();
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -265,4 +274,11 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver 
     private void populateForm(Empleado value) {
         this.empleado = value;
     }
+
+	@Override
+	public void refrescarGridEmpleados(List<Empleado> empleados) {
+		Collection<Empleado> items = empleados;
+		grid.setItems(items);
+		this.empleados = empleados;
+	}
 }

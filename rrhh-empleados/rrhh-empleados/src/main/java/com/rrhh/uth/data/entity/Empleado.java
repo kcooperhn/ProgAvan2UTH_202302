@@ -9,8 +9,10 @@ public class Empleado extends AbstractEntity {
     private String identidad;
     private Integer sueldo;
     private String telefono;
-    private LocalTime horarioInicio;
-    private LocalTime horarioFin;
+    //private LocalTime horarioInicio;
+    //private LocalTime horarioFin;
+    private String horarioinicio;
+    private String horariofin;
     private Long puesto;
 
     public String getNombre() {
@@ -38,18 +40,7 @@ public class Empleado extends AbstractEntity {
         this.telefono = telefono;
     }
    
-	public LocalTime getHorarioInicio() {
-		return horarioInicio;
-	}
-	public void setHorarioInicio(LocalTime horarioInicio) {
-		this.horarioInicio = horarioInicio;
-	}
-	public LocalTime getHorarioFin() {
-		return horarioFin;
-	}
-	public void setHorarioFin(LocalTime horarioFin) {
-		this.horarioFin = horarioFin;
-	}
+	
 	public Long getPuesto() {
 		return puesto;
 	}
@@ -61,5 +52,17 @@ public class Empleado extends AbstractEntity {
 	   DecimalFormat formato = new DecimalFormat("#,###.00");
 	   return this.nombre+" -> L. "+formato.format(this.sueldo);
    }
+	public String getHorarioinicio() {
+		return horarioinicio;
+	}
+	public void setHorarioinicio(String horarioinicio) {
+		this.horarioinicio = horarioinicio;
+	}
+	public String getHorariofin() {
+		return horariofin;
+	}
+	public void setHorariofin(String horariofin) {
+		this.horariofin = horariofin;
+	}
 
 }
