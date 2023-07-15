@@ -9,9 +9,11 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -53,6 +55,7 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
     private TimePicker horarioFin; 
     private ComboBox<Puesto> puesto;
     private List<Empleado> empleados;
+    private List<Puesto> puestos;
 
     private final Button cancel = new Button("Cancelar");
     private final Button save = new Button("Guardar");
@@ -78,18 +81,36 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
         grid.addColumn("identidad").setAutoWidth(true);
         grid.addColumn("sueldo").setAutoWidth(true);
         grid.addColumn("telefono").setAutoWidth(true);
-        grid.addColumn(Empleado::getHorarioinicio).setAutoWidth(true);
-        grid.addColumn(Empleado::getHorariofin).setAutoWidth(true);
-        grid.addColumn("puesto").setAutoWidth(true);
+        grid.addColumn(Empleado::getHorarioinicio).setAutoWidth(true).setHeader("Hora Inicio");
+        grid.addColumn(Empleado::getHorariofin).setAutoWidth(true).setHeader("Hora Fin");
+        grid.addColumn("nombrepuesto").setAutoWidth(true).setHeader("Puesto");
+        //grid.addColumn("puesto").setAutoWidth(true);
         /*grid.setItems(query -> empleadoService.list(
                 PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());*/
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        
+        GridContextMenu<Empleado> menu = grid.addContextMenu();
+        menu.addItem("Eliminar", event -> {
+        	ConfirmDialog dialog = new ConfirmDialog();
+        	dialog.setHeader("Confirmar Eliminación de "+event.getItem().get().getNombre());
+        	dialog.setText(
+        	        "¿Confirmas que deseas eliminar el empleado seleccionado?");
+
+        	dialog.setCancelable(true);
+
+        	dialog.setConfirmText("Eliminar");
+        	dialog.setConfirmButtonTheme("error primary");
+        	dialog.addConfirmListener(event2 -> {
+        		this.controlador.eliminarEmpleado(event.getItem().get().getIdentidad());
+        	});
+        	dialog.open();
+        });
 
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
             if (event.getValue() != null) {
-                UI.getCurrent().navigate(String.format(EMPLEADO_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
+                UI.getCurrent().navigate(String.format(EMPLEADO_EDIT_ROUTE_TEMPLATE, event.getValue().getIdentidad()));
             } else {
                 clearForm();
                 UI.getCurrent().navigate(GestióndeEmpleadosView.class);
@@ -98,6 +119,7 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
         
         //AQUI MANDO A TRAER LOS EMPLEADOS DE EL REPOSITORIO
         this.controlador.consultarEmpleados();
+        this.controlador.consultarPuestos();
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -107,16 +129,33 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
         save.addClickListener(e -> {
             try {
                 if (this.empleado == null) {
-                    this.empleado = new Empleado();
+                    //ESTOY CREANDO UNO NUEVO
+                	this.empleado = new Empleado();
+                	this.empleado.setNombre(this.nombre.getValue());
+                	this.empleado.setIdentidad(this.identidad.getValue());
+                	this.empleado.setTelefono(this.telefono.getValue());
+                	this.empleado.setSueldo(this.sueldo.getValue());
+                	this.empleado.setHorarioinicio(this.horarioInicio.getValue().toString());
+                	this.empleado.setHorariofin(this.horarioFin.getValue().toString());
+                	this.empleado.setPuesto(this.puesto.getValue().getIdpuesto());
+                	this.controlador.crearNuevoEmpleado(empleado);
+                }else {
+                	//ESTOY EDITANDO UNO EXISTENTE
+                	this.empleado.setNombre(this.nombre.getValue());
+                	this.empleado.setIdentidad(this.identidad.getValue());
+                	this.empleado.setTelefono(this.telefono.getValue());
+                	this.empleado.setSueldo(this.sueldo.getValue());
+                	this.empleado.setHorarioinicio(this.horarioInicio.getValue().toString());
+                	this.empleado.setHorariofin(this.horarioFin.getValue().toString());
+                	this.empleado.setPuesto(this.puesto.getValue().getIdpuesto());
+                	this.controlador.actualizarEmpleado(empleado);
                 }
-                //empleadoService.update(this.empleado);
                 clearForm();
                 refreshGrid();
-                Notification.show("Data updated");
                 UI.getCurrent().navigate(GestióndeEmpleadosView.class);
             } catch (ObjectOptimisticLockingFailureException exception) {
                 Notification n = Notification.show(
-                        "Error updating the data. Somebody else has updated the record while you were making changes.");
+                        "Error al almacenar los datos. Revisa tu conexión e intenta nuevamente.");
                 n.setPosition(Position.MIDDLE);
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
@@ -125,19 +164,24 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        Optional<Long> empleadoId = event.getRouteParameters().get(EMPLEADO_ID).map(Long::parseLong);
+        Optional<String> empleadoId = event.getRouteParameters().get(EMPLEADO_ID);
+        boolean encontrado = false;
         if (empleadoId.isPresent()) {
-           /* Optional<Empleado> empleadoFromBackend = empleadoService.get(empleadoId.get());
-            if (empleadoFromBackend.isPresent()) {
-                populateForm(empleadoFromBackend.get());
-            } else {
-                Notification.show(String.format("The requested empleado was not found, ID = %s", empleadoId.get()),
+            for(Empleado e: this.empleados) {
+            	if(e.getIdentidad().equals(empleadoId.get())) {
+            		populateForm(e);
+            		encontrado = true;
+            		break;
+            	}
+            }
+            if (!encontrado) {
+            	Notification.show(String.format("El empleado con identidad = %s", empleadoId.get()+" no fue encontrado"),
                         3000, Notification.Position.BOTTOM_START);
                 // when a row is selected but the data is no longer available,
                 // refresh grid
                 refreshGrid();
                 event.forwardTo(GestióndeEmpleadosView.class);
-            }*/
+            }
         }
     }
 
@@ -202,10 +246,7 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
         });
         
         puesto = new ComboBox<>("Puesto");
-        Collection<Puesto> listadoPuestos = generarPuestosPrueba();
-		puesto.setItems(listadoPuestos);
         puesto.setItemLabelGenerator(Puesto::getNombre);
-        
         
         formLayout.add(nombre, identidad, sueldo, telefono, horarioInicio, horarioFin, puesto);
 
@@ -214,37 +255,6 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
 
         splitLayout.addToSecondary(editorLayoutDiv);
     }
-
-    private Collection<Puesto> generarPuestosPrueba() {
-		List<Puesto> listado = new ArrayList<>();
-		Puesto asesorContable = new Puesto();
-		asesorContable.setNombre("Asesor Contable");
-		asesorContable.setDepartamento("Contabilidad");
-		
-		Puesto gerenteTI = new Puesto();
-		gerenteTI.setNombre("Gerente TI");
-		gerenteTI.setDepartamento("Sistemas");
-		
-		Puesto programador = new Puesto();
-		programador.setNombre("Programador Jr.");
-		programador.setDepartamento("Sistemas");
-		
-		Puesto gerenteContabilidad = new Puesto();
-		gerenteContabilidad.setNombre("Gerente de Contabilidad");
-		gerenteContabilidad.setDepartamento("Contabilidad");
-		
-		Puesto gerenteRRHH = new Puesto();
-		gerenteRRHH.setNombre("Gerente de RRHH");
-		gerenteRRHH.setDepartamento("RRHH");
-		
-		listado.add(asesorContable);
-		listado.add(gerenteTI);
-		listado.add(programador);
-		listado.add(gerenteContabilidad);
-		listado.add(gerenteRRHH);
-		
-		return listado;
-	}
 
 	private void createButtonLayout(Div editorLayoutDiv) {
         HorizontalLayout buttonLayout = new HorizontalLayout();
@@ -263,6 +273,7 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
     }
 
     private void refreshGrid() {
+    	this.controlador.consultarEmpleados();
         grid.select(null);
         grid.getDataProvider().refreshAll();
     }
@@ -272,13 +283,93 @@ public class GestióndeEmpleadosView extends Div implements BeforeEnterObserver,
     }
 
     private void populateForm(Empleado value) {
-        this.empleado = value;
+    	this.empleado = value;
+    	if(value == null) {
+    		this.nombre.setValue("");
+    		this.identidad.setValue("");
+    		this.sueldo.setValue(0.0d);
+    		this.telefono.setValue("");
+    		this.horarioInicio.setValue(null);
+    		this.horarioFin.setValue(null);
+    		this.puesto.setValue(null);
+    	}else {
+    		this.nombre.setValue(value.getNombre());
+    		this.identidad.setValue(value.getIdentidad());
+    		this.sueldo.setValue(value.getSueldo());
+    		this.telefono.setValue(value.getTelefono());
+    		
+    		String [] datosinicio = value.getHorarioinicio().split(":");
+    		String minutosInicioStr = datosinicio[1].replace("pm", "");
+    		minutosInicioStr = minutosInicioStr.replace("am", "");
+    		int horaInicioInt = Integer.parseInt(datosinicio[0]);
+    		horaInicioInt += (value.getHorarioinicio().contains("pm")? 12: 0);
+    		
+    		String [] datosfin = value.getHorariofin().split(":");
+    		String minutosFinStr = datosfin[1].replace("pm", "");
+    		minutosFinStr = minutosFinStr.replace("am", "");
+    		int horaFinInt = Integer.parseInt(datosfin[0]);
+    		horaFinInt += (value.getHorariofin().contains("pm")? 12: 0);
+    		
+    		LocalTime horaInicial = LocalTime.of(horaInicioInt, Integer.parseInt(minutosInicioStr));
+    		LocalTime horaFinal = LocalTime.of(horaFinInt, Integer.parseInt(minutosFinStr));
+    		
+			this.horarioInicio.setValue(horaInicial);
+			this.horarioFin.setValue(horaFinal);
+			this.puesto.setValue(buscarPuestoSeleccionado(value.getPuesto()));
+    	}
+    	
     }
+
+	private Puesto buscarPuestoSeleccionado(Integer idPuesto) {
+		Puesto seleccionado = new Puesto();
+		for (Puesto p : puestos) {
+			if(p.getIdpuesto() == idPuesto) {
+				seleccionado = p;
+				break;
+			}
+		}
+		return seleccionado;
+	}
 
 	@Override
 	public void refrescarGridEmpleados(List<Empleado> empleados) {
 		Collection<Empleado> items = empleados;
 		grid.setItems(items);
 		this.empleados = empleados;
+	}
+
+	@Override
+	public void mostrarMensajeCreacion(boolean exito) {
+		String mensajeMostrar = "Empleado creado exitosamente!";
+		if(!exito) {
+			mensajeMostrar = "Empleado no pudo ser creado :(";
+		}
+		 Notification.show(mensajeMostrar);
+	}
+
+	@Override
+	public void mostrarMensajeActualizacion(boolean exito) {
+		String mensajeMostrar = "Empleado actualizado exitosamente!";
+		if(!exito) {
+			mensajeMostrar = "Empleado no pudo ser actualizado :(";
+		}
+		 Notification.show(mensajeMostrar);
+	}
+
+	@Override
+	public void refrescarComboPuestos(List<Puesto> puestos) {
+		Collection<Puesto> listadoPuestos = puestos;
+		puesto.setItems(listadoPuestos);
+		this.puestos = puestos;
+	}
+
+	@Override
+	public void mostrarMensajeEliminacion(boolean exito) {
+		String mensajeMostrar = "Empleado eliminado exitosamente!";
+		if(!exito) {
+			mensajeMostrar = "Empleado no pudo ser eliminado :(";
+		}
+		 Notification.show(mensajeMostrar);
+		 this.controlador.consultarEmpleados();
 	}
 }

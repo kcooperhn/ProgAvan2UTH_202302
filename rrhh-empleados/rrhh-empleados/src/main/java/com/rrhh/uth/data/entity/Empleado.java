@@ -3,17 +3,16 @@ package com.rrhh.uth.data.entity;
 import java.text.DecimalFormat;
 import java.time.LocalTime;
 
-public class Empleado extends AbstractEntity {
+public class Empleado {
 
     private String nombre;
     private String identidad;
-    private Integer sueldo;
+    private Double sueldo;
     private String telefono;
-    //private LocalTime horarioInicio;
-    //private LocalTime horarioFin;
     private String horarioinicio;
     private String horariofin;
-    private Long puesto;
+    private Integer puesto;
+    private String nombrepuesto;
 
     public String getNombre() {
         return nombre;
@@ -27,10 +26,10 @@ public class Empleado extends AbstractEntity {
     public void setIdentidad(String identidad) {
         this.identidad = identidad;
     }
-    public Integer getSueldo() {
+    public Double getSueldo() {
         return sueldo;
     }
-    public void setSueldo(Integer sueldo) {
+    public void setSueldo(Double sueldo) {
         this.sueldo = sueldo;
     }
     public String getTelefono() {
@@ -39,12 +38,11 @@ public class Empleado extends AbstractEntity {
     public void setTelefono(String telefono) {
         this.telefono = telefono;
     }
-   
 	
-	public Long getPuesto() {
+	public Integer getPuesto() {
 		return puesto;
 	}
-	public void setPuesto(Long puesto) {
+	public void setPuesto(Integer puesto) {
 		this.puesto = puesto;
 	}
 
@@ -64,5 +62,12 @@ public class Empleado extends AbstractEntity {
 	public void setHorariofin(String horariofin) {
 		this.horariofin = horariofin;
 	}
+	public String getNombrepuesto() {
+		return nombrepuesto;
+	}
+	public void setNombrepuesto(String nombrepuesto) {
+		this.nombrepuesto = nombrepuesto;
+	}
 
+	
 }

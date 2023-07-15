@@ -101,23 +101,23 @@ public class PlanillaView extends Div {
     	Empleado e1 = new Empleado();
     	e1.setNombre("Luis Perez");
     	e1.setIdentidad("0801198012345");
-    	e1.setSueldo(10000);
+    	e1.setSueldo(10000d);
     	Empleado e2 = new Empleado();
     	e2.setNombre("Mario Rosales");
     	e2.setIdentidad("0801198012346");
-    	e2.setSueldo(15000);
+    	e2.setSueldo(15000d);
     	Empleado e3 = new Empleado();
     	e3.setNombre("Carlos Rodriguez");
     	e3.setIdentidad("0801198012347");
-    	e3.setSueldo(12000);
+    	e3.setSueldo(12000d);
     	Empleado e4 = new Empleado();
     	e4.setNombre("Roberto Juarez");
     	e4.setIdentidad("0801198012348");
-    	e4.setSueldo(18000);
+    	e4.setSueldo(18000d);
     	Empleado e5 = new Empleado();
     	e5.setNombre("Luisa Jimenez");
     	e5.setIdentidad("0801198012349");
-    	e5.setSueldo(20000);
+    	e5.setSueldo(20000d);
     	
 		listaEmpleados.add(e1);
 		listaEmpleados.add(e2);
