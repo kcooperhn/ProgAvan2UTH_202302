@@ -1,6 +1,7 @@
 package com.hn.clima.data.controller;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import com.hn.clima.data.entity.ClimaData;
 import com.hn.clima.data.entity.ResponseWeather;
@@ -32,6 +33,7 @@ public class WeatherInteractorImpl implements WeatherInteractor {
 		
 		ClimaData datos = new ClimaData();
 		if(respuesta != null) {
+			datos.setFecha(LocalDateTime.now());
 			datos.setPais(respuesta.getSys().getCountry());
 			datos.setLugar(respuesta.getName());
 			datos.setDescripcion(respuesta.getWeather().get(0).getDescription());

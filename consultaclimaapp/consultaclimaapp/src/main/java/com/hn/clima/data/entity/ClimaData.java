@@ -1,7 +1,10 @@
 package com.hn.clima.data.entity;
 
+import java.time.LocalDateTime;
+
 public class ClimaData {
 
+	private LocalDateTime fecha;
     private String descripcion;
     private Double temperatura;
     private Integer humedad;
@@ -44,6 +47,12 @@ public class ClimaData {
 	}
 	public void setSensaciontermica(Double sensaciontermica) {
 		this.sensaciontermica = sensaciontermica;
+	}
+	public LocalDateTime getFecha() {
+		return fecha;
+	}
+	public void setFecha(LocalDateTime fecha) {
+		this.fecha = fecha;
 	}
 	
 
