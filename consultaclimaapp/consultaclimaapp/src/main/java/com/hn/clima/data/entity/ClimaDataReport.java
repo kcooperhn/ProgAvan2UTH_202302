@@ -1,6 +1,9 @@
 package com.hn.clima.data.entity;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -49,7 +52,9 @@ public class ClimaDataReport implements JRDataSource {
 	@Override
 	public Object getFieldValue(JRField jrField) throws JRException {
 		if("FECHA".equals(jrField.getName())) {
-			return datos.get(counter).getFecha().toString();
+			Locale locale = new Locale("es","HN");
+			DateTimeFormatter format = DateTimeFormatter.ofPattern("EEE dd-MM-yy hh:mm a", locale);
+			return format.format(datos.get(counter).getFecha());
 		}else if("PAIS".equals(jrField.getName())) {
 			return datos.get(counter).getPais();
 		}else if("CIUDAD".equals(jrField.getName())) {

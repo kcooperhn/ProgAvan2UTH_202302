@@ -23,6 +23,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -46,7 +47,7 @@ public class ConsultaView extends Div implements WeatherViewModel {
     private final TextField lon = new TextField("Longitud");
     private Grid<ClimaData> grid;
     private List<ClimaData> datos;
-    
+    private RadioButtonGroup<String> radioGroup;
     private WeatherInteractor controlador;
 
     public ConsultaView() {
@@ -127,6 +128,11 @@ public class ConsultaView extends Div implements WeatherViewModel {
         	}
         	
         });
+        
+        radioGroup = new RadioButtonGroup<>();
+        radioGroup.setLabel("Autoriza");
+        radioGroup.setItems("Gerente", "SubGerente", "Jefe");
+        radioGroup.setValue("Gerente");
 
         Div actions = new Div(resetBtn, searchBtn);
         actions.addClassName(LumoUtility.Gap.SMALL);
@@ -135,7 +141,7 @@ public class ConsultaView extends Div implements WeatherViewModel {
         VerticalLayout layout = new VerticalLayout();
         HorizontalLayout l2 = new HorizontalLayout(lat, lon);
         l2.setWidthFull();
-        layout.add(l2,actions);
+        layout.add(l2,actions, radioGroup);
         layout.setPadding(false);
         layout.setSpacing(false);
         return layout;
@@ -188,6 +194,19 @@ public class ConsultaView extends Div implements WeatherViewModel {
     private void generarReporteClima() {
     	ReportGenerator generador = new ReportGenerator();
     	Map<String, Object> parametros = new HashMap<>();
+    	parametros.put("NOMBRE_LOGO", "ClimaApp");
+    	parametros.put("LOGO_DIR", "weather.png");
+    	
+    	String autorizacion = radioGroup.getValue();
+    	if("gerente".equalsIgnoreCase(autorizacion)) {
+    		parametros.put("FIRMA_DIR", "firma_1.png");
+    	}else if("subgerente".equalsIgnoreCase(autorizacion)) {
+    		parametros.put("FIRMA_DIR", "firma_2.png");
+    	}else {
+    		parametros.put("FIRMA_DIR", "firma_3.png");
+    	}
+    	
+    	
 		ClimaDataReport datasource = new ClimaDataReport();
 		datasource.setData(datos);
 		boolean generado = generador.generarReportePDF("reporte_clima_actual", parametros, datasource);
